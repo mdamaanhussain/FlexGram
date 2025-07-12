@@ -1,4 +1,4 @@
-echo "# FlexGram - Instagram Clone
+FlexGram - Instagram Clone
 
 ## Features
 📸 Image uploads  
