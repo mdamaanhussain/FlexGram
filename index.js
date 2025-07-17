@@ -63,7 +63,7 @@ let posts = [
   { 
     id: uuidv4(), 
     username: "haniauwuwu_", 
-    caption: "Just Kidding !!", 
+    caption: "Queen lies here !!", 
     image: "/uploads/hania.jpeg",
     likes: 42,
     comments: [],
