@@ -14,5 +14,6 @@ FlexGram - Instagram Clone
 ## Setup
 1. \`npm install\`
 2. \`node index.js\`
+3. The .ejs files should be inside views folder
 
 " > README.md
