@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlexGram</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style type="text/tailwindcss">
+    @layer components {
+      .post-image {
+        aspect-ratio: 1;
+        object-fit: cover;
+      }
+
+      .auth-pill {
+        @apply rounded-full border border-white/40 bg-white/10 backdrop-blur-md shadow-lg shadow-black/10;
+      }
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #020617;
+      overflow-x: hidden;
+    }
+
+    .video-bg {
+      filter: brightness(0.6) saturate(1.1);
+    }
+
+    .feed-shell {
+      width: min(100%, 52rem);
+      margin: 0 auto;
+    }
+
+    .top-auth-panel {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .top-auth-panel.hidden-auth {
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+    }
+
+    .create-post-cta {
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    .create-post-cta.hidden-cta {
+      opacity: 0;
+      transform: translate(-50%, -12px);
+      pointer-events: none;
+    }
+
+    @media (max-width: 1080px) {
+      .feed-shell {
+        width: min(100%, 46rem);
+        margin: 0 auto;
+      }
+
+      .create-post-cta {
+        position: fixed;
+        top: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 30;
+      }
+
+      .feed-shell {
+        padding-top: 4.75rem;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .auth-card {
+        max-width: min(170px, calc(100vw - 0.75rem));
+      }
+
+      .auth-name {
+        font-size: 9px;
+        line-height: 1.2;
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+      }
+
+      .auth-button {
+        font-size: 9px;
+        padding: 0.4rem 0.7rem;
+      }
+
+      .feed-shell {
+        padding-top: 4.5rem;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen text-white">
+<div class="fixed inset-0 -z-20 overflow-hidden">
+  <video autoplay muted loop playsinline class="video-bg h-full w-full object-cover">
+    <source src="/uploads/dure.mp4" type="video/mp4" />
+  </video>
+  <div class="absolute inset-0 bg-slate-950/30"></div>
+</div>
+
+  <div class="top-auth-panel fixed top-3 right-3 z-10 sm:top-4 sm:right-4">
+    <% if (user) { %>
+      <div class="auth-card flex flex-col items-end gap-1">
+        <div class="auth-pill w-full max-w-[180px] px-2.5 py-1 text-center auth-name font-semibold text-pink-200 text-right">
+          <%= user.username %>
+        </div>
+        <form action="/logout" method="POST" class="inline-block">
+          <button type="submit" class="auth-button auth-pill px-2.5 py-1 font-medium text-white transition hover:bg-white/20 hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-pink-300/70">
+            Logout
+          </button>
+        </form>
+      </div>
+    <% } else { %>
+      <a href="/login" class="auth-pill inline-flex items-center px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/20 hover:border-white/60 sm:text-sm">Login</a>
+    <% } %>
+  </div>
+
+  <div class="feed-shell px-4 py-8 pt-20 sm:pt-24">
+
+    <header class="mb-8 text-center">
+      <h1 class="text-2xl font-bold text-white mb-2 sm:text-3xl">FlexGram</h1>
+      <p class="text-[10px] text-gray-300 hover:text-pink-400 transition-colors duration-300 cursor-default mt-1 sm:text-xs">Made by Amaan</p>
+
+      <br>
+      <% if (user) { %>
+        <a href="/posts/new" class="create-post-cta inline-block bg-gradient-to-r from-pink-500 to-orange-500 text-white px-5 py-2 rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 sm:px-6 sm:text-base">
+          <i class="fas fa-plus mr-2"></i>Create New Post
+        </a>
+      <% } %>
+    </header>
+
+    <div class="space-y-8">
+      <% posts.forEach(post => { %>
+        <% const isOwner = user && (user.isAdmin || user.username === post.username); %>
+        <% const hasLiked = user && post.likedBy && post.likedBy.includes(user.username); %>
+        <div class="bg-white/90 backdrop-blur-md rounded-xl shadow-md overflow-hidden border border-gray-200">
+          <div class="flex items-center p-4">
+            <img src="<%= post.image %>" class="w-10 h-10 rounded-full object-cover border-2 border-pink-500">
+            <div class="ml-3">
+              <span class="font-semibold text-gray-800"><%= post.username %></span>
+              <div class="text-xs text-gray-500">
+                <%= new Date(post.timestamp).toLocaleDateString() %> at <%= new Date(post.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-100 flex justify-center">
+            <img src="<%= post.image %>" class="post-image w-full max-h-[600px]">
+          </div>
+
+          <div class="p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex space-x-4">
+                <% if (user) { %>
+                  <form method="POST" action="/posts/<%= post._id %>/like">
+                    <button type="submit" class="text-2xl <%= hasLiked ? 'text-red-500' : 'text-gray-700' %> hover:text-red-500 transition-colors">
+                      <i class="far fa-heart"></i>
+                    </button>
+                  </form>
+                <% } else { %>
+                  <button type="button" class="text-2xl text-gray-700" disabled>
+                    <i class="far fa-heart"></i>
+                  </button>
+                <% } %>
+                <button class="text-2xl text-gray-700 hover:text-blue-400 transition-colors">
+                  <i class="far fa-comment"></i>
+                </button>
+              </div>
+
+              <% if (isOwner) { %>
+                <form method="POST" action="/posts/<%= post._id %>?_method=DELETE">
+                  <button type="submit" class="text-red-500 hover:text-red-700 transition-colors">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              <% } %>
+            </div>
+
+            <div class="font-semibold text-gray-800 mb-2">
+              <%= post.likes %> likes
+            </div>
+
+            <div class="text-gray-800 mb-1">
+              <span class="font-semibold"><%= post.username %></span> <%= post.caption %>
+            </div>
+
+            <div class="text-gray-500 text-sm mt-2">
+              <a href="#" class="hover:underline">View all 12 comments</a>
+            </div>
+
+            <div class="mt-3 flex items-center border-t pt-3">
+              <input type="text" placeholder="Add a comment..." class="flex-grow bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-300">
+              <button class="ml-2 text-pink-500 font-semibold text-sm">Post</button>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+
+  <script>
+    const authPanel = document.querySelector('.top-auth-panel');
+    const createPostCta = document.querySelector('.create-post-cta');
+    let lastScrollY = window.scrollY;
+
+    const updateStickyVisibility = () => {
+      const currentScrollY = window.scrollY;
+
+      if (authPanel) {
+        if (currentScrollY > lastScrollY + 10) {
+          authPanel.classList.add('hidden-auth');
+        } else if (currentScrollY < lastScrollY - 10) {
+          authPanel.classList.remove('hidden-auth');
+        }
+      }
+
+      if (createPostCta) {
+        if (currentScrollY > lastScrollY + 10) {
+          createPostCta.classList.add('hidden-cta');
+        } else if (currentScrollY < lastScrollY - 10) {
+          createPostCta.classList.remove('hidden-cta');
+        }
+      }
+
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', updateStickyVisibility, { passive: true });
+  </script>
+</body>
+</html>
