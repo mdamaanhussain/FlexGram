@@ -1,2 +1,9 @@
 node_modules/
 .env
+.env.example
+ARCHITECTURE.md
+AWS_S3_MIGRATION.md
+DOCS_INDEX.md
+MIGRATION_SUMMARY.md
+TROUBLESHOOTING.md
+QUICK_START.md

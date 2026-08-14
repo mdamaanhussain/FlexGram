@@ -5,7 +5,8 @@ const mongoose = require("mongoose");
 const multer = require("multer");
 const session = require("express-session");
 const methodOverride = require("method-override");
-const { GridFSBucket, ObjectId } = require("mongodb");
+const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
 
 const app = express();
@@ -15,6 +16,20 @@ const ADMIN_USERNAME = "amaanhussain786_";
 const ADMIN_PASSWORD = "admin@123";
 const UPLOADS_DIR = path.join(__dirname, "public", "uploads");
 const ALLOWED_IMAGE_TYPES = /jpeg|jpg|png|gif|webp/;
+
+// AWS S3 Configuration
+const S3_REGION = process.env.AWS_REGION || "us-east-1";
+const S3_BUCKET_NAME = process.env.AWS_S3_BUCKET || "flexgram-uploads";
+const S3_ACCESS_KEY = process.env.AWS_ACCESS_KEY_ID;
+const S3_SECRET_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+
+const s3Client = new S3Client({
+  region: S3_REGION,
+  credentials: {
+    accessKeyId: S3_ACCESS_KEY,
+    secretAccessKey: S3_SECRET_KEY
+  }
+});
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -121,44 +136,42 @@ const upload = multer({
   }
 });
 
-function getGridFSBucket() {
-  return new GridFSBucket(mongoose.connection.db, { bucketName: "uploads" });
-}
+async function uploadImageToS3(file) {
+  const fileKey = `uploads/${uuidv4()}-${file.originalname}`;
 
-async function uploadImageToGridFS(file) {
-  if (!mongoose.connection.db) {
-    throw new Error("MongoDB is not connected");
-  }
-
-  const bucket = getGridFSBucket();
-  const fileId = new ObjectId();
-
-  await new Promise((resolve, reject) => {
-    const uploadStream = bucket.openUploadStreamWithId(fileId, file.originalname, {
-      contentType: file.mimetype,
-      metadata: { uploadedAt: new Date() }
-    });
-
-    uploadStream.on("finish", resolve);
-    uploadStream.on("error", reject);
-    uploadStream.end(file.buffer);
+  const command = new PutObjectCommand({
+    Bucket: S3_BUCKET_NAME,
+    Key: fileKey,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+    Metadata: {
+      uploadedAt: new Date().toISOString()
+    }
   });
 
-  return `/files/${fileId.toString()}`;
+  try {
+    await s3Client.send(command);
+    return `/s3-file/${fileKey}`;
+  } catch (err) {
+    console.error("S3 upload error:", err.message);
+    throw new Error("Failed to upload image to S3");
+  }
 }
 
 async function deleteStoredImage(imageUrl) {
   if (!imageUrl) return;
 
-  if (imageUrl.startsWith("/files/")) {
-    const fileId = imageUrl.split("/files/")[1];
-    if (!ObjectId.isValid(fileId) || !mongoose.connection.db) return;
+  if (imageUrl.startsWith("/s3-file/")) {
+    const fileKey = imageUrl.split("/s3-file/")[1];
 
     try {
-      const bucket = getGridFSBucket();
-      await bucket.delete(new ObjectId(fileId));
+      const command = new DeleteObjectCommand({
+        Bucket: S3_BUCKET_NAME,
+        Key: fileKey
+      });
+      await s3Client.send(command);
     } catch (err) {
-      console.error("GridFS delete error:", err.message);
+      console.error("S3 delete error:", err.message);
     }
     return;
   }
@@ -206,28 +219,22 @@ app.use(methodOverride("_method"));
 
 app.get("/", (req, res) => res.redirect("/posts"));
 
-app.get("/files/:fileId", async (req, res) => {
+app.get("/s3-file/*", async (req, res) => {
   try {
-    const { fileId } = req.params;
-    if (!ObjectId.isValid(fileId)) {
-      return res.status(400).send("Invalid image id");
-    }
+    const fileKey = req.params[0];
 
-    const bucket = getGridFSBucket();
-    const file = await bucket.find({ _id: new ObjectId(fileId) }).next();
+    const command = new GetObjectCommand({
+      Bucket: S3_BUCKET_NAME,
+      Key: fileKey
+    });
 
-    if (!file) {
-      return res.status(404).send("Image not found");
-    }
-
-    res.set("Content-Type", file.contentType || "application/octet-stream");
-    const downloadStream = bucket.openDownloadStream(new ObjectId(fileId));
-
-    downloadStream.on("error", () => res.status(404).send("Image not found"));
-    downloadStream.pipe(res);
+    const response = await s3Client.send(command);
+    res.set("Content-Type", response.ContentType || "application/octet-stream");
+    res.set("Cache-Control", "public, max-age=31536000");
+    response.Body.pipe(res);
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Error loading image from MongoDB");
+    console.error("S3 download error:", err.message);
+    res.status(404).send("Image not found");
   }
 });
 
@@ -272,7 +279,7 @@ app.post("/posts", requireAuth, upload.single("image"), async (req, res) => {
       throw new Error("No image uploaded");
     }
 
-    const imagePath = await uploadImageToGridFS(req.file);
+    const imagePath = await uploadImageToS3(req.file);
 
     await Post.create({
       username: req.session.user.username,

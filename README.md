@@ -1,153 +1,385 @@
-# FlexGram
+# 📸 FlexGram - Instagram-style Social Media App
 
-FlexGram is a simple Instagram-style social media app built with Node.js, Express, MongoDB, and EJS. It supports user login, photo uploads, likes, post management, and admin access.
+FlexGram is an Instagram-style social media application where users can upload photos, like posts, and manage their content.
 
-## Project Purpose
-This project is designed to behave like a lightweight social media app where:
-- users can log in
-- logged-in users can upload their own posts
-- users can like posts
-- users can edit/delete only their own posts
-- admin can manage any post
-- uploaded images are stored in MongoDB GridFS so the data persists across refreshes
+---
 
-## Tech Stack
-- Node.js
-- Express.js
-- MongoDB + Mongoose
-- GridFS for image storage
-- EJS templates
-- Tailwind CSS via CDN
-- Express Session for login state
-- Multer for file upload handling
+## 🎯 What Does This Project Do?
 
-## Folder Structure
+**In simple terms:**
+- Users can log in
+- Users can create posts with photos
+- Users can like other posts
+- Users can edit/delete their own posts
+- Admin can manage any post
 
-```text
-FlexGram/
-├── index.js                 # Main server + routes + MongoDB logic
-├── package.json             # Project dependencies and scripts
-├── .env                     # Environment variables (Mongo URI, PORT)
-├── README.md                # Project documentation
-├── public/
-│   └── uploads/            # Local fallback folder for uploaded/static files
-├── views/
-│   ├── index.ejs            # Main feed page with posts and auth UI
-│   ├── login.ejs            # Login page
-│   ├── new.ejs              # Create new post page
-│   ├── edit.ejs             # Edit existing post page
-│   └── show.ejs             # Individual post detail page
-└── node_modules/            # Installed dependencies
+---
+
+## 🔧 Technology Stack
+
+```
+Frontend:  EJS (HTML + Embedded JavaScript)
+Backend:   Node.js + Express.js
+Database:  MongoDB (for post data)
+Storage:   AWS S3 (for images) ✨ [Recently updated]
 ```
 
-## Files and What They Do
+---
 
-### index.js
-This is the main app file. It handles:
-- Express app setup
-- MongoDB connection
-- Mongoose schema for posts
-- login/logout session logic
-- GridFS image upload and deletion
-- route handling for posts and authentication
-- default sample post seeding
-- server startup
+## 📁 Folder Structure
 
-Important sections inside this file:
+```
+FlexGram/
+│
+├── index.js                  ← Main application file (all logic here)
+├── package.json              ← All dependencies/packages
+├── .env                      ← Secret keys (AWS, MongoDB)
+├── .env.example              ← .env file reference
+│
+├── public/
+│   └── uploads/              ← Local fallback folder (images now from AWS S3)
+│
+├── views/ (All pages shown to users)
+│   ├── index.ejs             ← Main feed (all posts displayed here)
+│   ├── login.ejs             ← Login page
+│   ├── new.ejs               ← Create new post page
+│   ├── edit.ejs              ← Edit post page
+│   └── show.ejs              ← Individual post details
+│
+├── MIGRATION_SUMMARY.md      ← What changed
+└── AWS_S3_MIGRATION.md       ← AWS S3 setup guide
 
-1. Constants and config
-   - `PORT`
-   - `MONGO_URI`
-   - `ADMIN_USERNAME`
-   - `ADMIN_PASSWORD`
-   - `UPLOADS_DIR`
+```
 
-2. Post model
-   - username
-   - caption
-   - image
-   - likes
-   - likedBy
-   - comments
-   - timestamp
+---
 
-3. Auth helpers
-   - `buildSessionUser()`
-   - `validateLogin()`
-   - `requireAuth()`
-   - `canManagePost()`
+## 🚀 Setup Instructions (Get Started in 5 Minutes)
 
-4. Upload and storage functions
-   - `uploadImageToGridFS(file)`
-   - `deleteStoredImage(imageUrl)`
-   - `getGridFSBucket()`
+### Step 1: Navigate to Project
+```bash
+cd "C:\Users\91700\OneDrive\Desktop\MERN CODE\FlexGram"
+```
 
-5. Routes
-   - `/login` and `/logout`
-   - `/posts`
-   - `/posts/new`
-   - `/posts/:id`
-   - `/posts/:id/edit`
-   - `/posts/:id/like`
-   - `/posts/:id?_method=DELETE`
+### Step 2: Install Dependencies
+```bash
+npm install
+```
+✅ Already completed!
 
-6. Server startup
-   - `mongoose.connect(MONGO_URI)`
-   - `seedDefaultPosts()`
-   - `app.listen(PORT)`
+### Step 3: Create and Configure .env File
 
-### views/index.ejs
-This is the main Instagram-like feed page.
+Copy from `.env.example` and create `.env`:
 
-It includes:
-- background video
-- username display on top-right
-- logout button
-- create post button
-- all posts in a feed
-- like button
-- delete icon for owner/admin
-- post image + caption + likes
+```bash
+# MongoDB (for database)
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/flexgram
 
-If you want to change the feed UI, this is the main file to edit.
+# AWS S3 (for images) - Get these from AWS
+AWS_REGION=us-east-1
+AWS_S3_BUCKET=your-s3-bucket-name
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 
-### views/login.ejs
-This is the login screen.
+# Server
+PORT=8080
+SESSION_SECRET=flexgram-secret-key
+```
 
-It contains:
-- username input
-- password input
-- admin credentials display
-- login form submission
+### Step 4: Set Up AWS Account
+If you don't have AWS:
+1. Go to [AWS Console](https://console.aws.amazon.com)
+2. Create S3 bucket: `flexgram-uploads`
+3. Create IAM user with S3 access
+4. Get Access Key and Secret Key
 
-Change admin credentials here or modify the login styling in this file.
+👉 **Detailed guide:** See `AWS_S3_MIGRATION.md`
 
-### views/new.ejs
-This page allows a logged-in user to create a new post.
+### Step 5: Start the Server
+```bash
+npm start
+```
 
-It contains:
-- caption textarea
-- image upload field
-- posting as current session user
-- cancel/share buttons
+Server will run at: http://localhost:8080
 
-### views/edit.ejs
-This page allows the owner/admin to edit the caption of an existing post.
+---
 
-Important points:
-- uses `post._id` instead of older `post.id`
-- updates through the `PATCH` route
-- the route is defined in `index.js` as `/posts/:id` with method override
+## 💻 How It Works
 
-### views/show.ejs
-This page shows an individual post in detail.
+### User Flow:
 
-It includes:
-- image preview
-- username
-- caption
-- likes
-- edit and delete buttons for allowed users
+```
+1. Open http://localhost:8080
+   ↓
+2. Login page appears
+   ├─ Enter Username
+   ├─ Enter Password
+   └─ Click Login
+   ↓
+3. Main Feed opens (all posts visible)
+   ├─ Click "Create Post" button
+   ├─ Write Caption
+   ├─ Upload Photo
+   └─ Click Share
+   ↓
+4. Photo uploaded to AWS S3 📸
+   Database stores post details
+   ↓
+5. Your post appears in Feed
+   ├─ Click Like button
+   ├─ Edit post
+   └─ Delete post (only your own)
+```
+
+---
+
+## 🔑 Admin Account
+
+```
+Username: amaanhussain786_
+Password: admin@123
+```
+
+**Admin Privileges:**
+- Edit/delete any post
+- View all posts
+- Full management access
+
+---
+
+## 📊 Database Schema
+
+### Post Data Structure:
+```javascript
+{
+  username: "user123",                    // Who created the post
+  caption: "Nice sunset! 🌅",             // Post description
+  image: "/s3-file/uploads/abc123-xyz",  // AWS S3 image path
+  likes: 42,                              // Number of likes
+  likedBy: ["user1", "user2"],           // Users who liked
+  comments: [],                           // Comments (future feature)
+  timestamp: 2024-01-15T10:30:00        // Post creation time
+}
+```
+
+---
+
+## 🔄 What Changed? (GridFS → AWS S3)
+
+### Before (MongoDB GridFS):
+```
+Photo → Server → MongoDB GridFS → Stored in Database
+        ❌ Slow
+        ❌ Expensive
+        ❌ Limited capacity
+```
+
+### Now (AWS S3):
+```
+Photo → Server → AWS S3 → Cloud Storage
+        ✅ Fast
+        ✅ Cost-effective
+        ✅ Unlimited storage
+```
+
+### Files That Changed:
+1. **index.js** - Three main changes:
+   - Replaced GridFS with S3 client
+   - Updated upload function
+   - Updated delete function
+   - Changed image serving route
+
+2. **package.json** - Added new dependency:
+   ```javascript
+   "@aws-sdk/client-s3": "^3.374.0"  // AWS S3 SDK
+   ```
+
+**Detailed info:** See `MIGRATION_SUMMARY.md`
+
+---
+
+## 📝 File Details
+
+### 🎯 index.js - The Core File
+
+**This file contains 6 main sections:**
+
+#### 1️⃣ Imports & Configuration
+```javascript
+const express = require("express");
+const mongoose = require("mongoose");
+const { S3Client, ... } = require("@aws-sdk/client-s3");  // AWS S3
+
+const PORT = 8080;
+const MONGO_URI = "...";  // Database
+const S3_BUCKET_NAME = "flexgram-uploads";  // AWS
+```
+
+#### 2️⃣ Post Schema (How data is stored)
+```javascript
+const postSchema = new mongoose.Schema({
+  username: String,
+  caption: String,
+  image: String,        // AWS S3 path
+  likes: Number,
+  likedBy: [String],
+  comments: [String],
+  timestamp: Date
+});
+```
+
+#### 3️⃣ Helper Functions
+- `validateLogin()` - Check login credentials
+- `canManagePost()` - Check if user can edit/delete
+- `uploadImageToS3()` - Upload photo to AWS S3
+- `deleteStoredImage()` - Delete photo from S3
+
+#### 4️⃣ Routes (Available URLs)
+```
+GET  /login              → Show login page
+POST /login              → Verify login
+POST /logout             → Logout user
+
+GET  /posts              → Show all posts feed
+GET  /posts/new          → New post creation page
+POST /posts              → Create and save post
+
+GET  /posts/:id          → Show individual post
+GET  /posts/:id/edit     → Edit post page
+PATCH /posts/:id         → Update post
+DELETE /posts/:id        → Delete post
+
+POST /posts/:id/like     → Add like to post
+GET  /s3-file/*          → Serve image from AWS S3
+```
+
+#### 5️⃣ Middleware (Processing functions)
+```javascript
+app.use(session(...))    // Remember login state
+app.use(express.static(...))  // Serve static files
+app.use(multer(...))     // Handle file uploads
+```
+
+#### 6️⃣ Server Startup
+```javascript
+mongoose.connect(MONGO_URI)  // Connect to database
+app.listen(PORT)            // Start server on port 8080
+```
+
+---
+
+### 🎨 Views (User Interface Pages)
+
+#### `login.ejs` - First Login Page
+```html
+<form method="POST" action="/login">
+  <input type="text" name="username" placeholder="Username">
+  <input type="password" name="password" placeholder="Password">
+  <button>Login</button>
+</form>
+```
+**What happens:** Sends username/password to `/login` POST route
+
+---
+
+#### `index.ejs` - Main Instagram Feed
+Displays all posts with:
+- Post images from AWS S3
+- Username and caption
+- Like button with count
+- Edit/Delete buttons (for owner/admin)
+- Create new post button
+
+---
+
+#### `new.ejs` - Create New Post
+Form to:
+- Write caption
+- Upload image (jpg, png, gif, webp)
+- Submit new post
+
+**Flow:**
+1. User selects image
+2. Writes caption
+3. Form submits
+4. `uploadImageToS3()` uploads to AWS S3
+5. Post details saved in MongoDB
+6. Post appears in feed
+
+---
+
+#### `edit.ejs` - Edit Post Caption
+Allows owner/admin to update post caption
+
+---
+
+#### `show.ejs` - Post Details
+Shows individual post with full details
+
+---
+
+## 🛠️ Common Commands
+
+```bash
+# Start server
+npm start
+
+# Development mode (auto-reload)
+npm run dev
+
+# Install dependencies
+npm install
+
+# Fix security vulnerabilities
+npm audit fix
+```
+
+---
+
+## ⚠️ Common Issues & Solutions
+
+### Issue: "Cannot find module '@aws-sdk/client-s3'"
+**Solution:**
+```bash
+npm install
+```
+
+### Issue: "MONGO_URI not found in .env"
+**Solution:**
+Add to `.env`:
+```
+MONGO_URI=mongodb+srv://your-username:your-password@cluster.mongodb.net/flexgram
+```
+
+### Issue: "Images not uploading / AWS S3 error"
+**Solution:**
+1. Verify AWS credentials
+2. Check S3 bucket exists
+3. Verify IAM policy
+
+👉 See: `AWS_S3_MIGRATION.md`
+
+---
+
+## 📚 For More Information:
+
+1. **AWS Setup:** See `AWS_S3_MIGRATION.md`
+2. **What Changed:** See `MIGRATION_SUMMARY.md`
+3. **Troubleshooting:** See `TROUBLESHOOTING.md`
+4. **Quick Start:** See `QUICK_START.md`
+
+---
+
+## ✅ Project Status
+
+- ✅ Database: MongoDB (Working)
+- ✅ Image Storage: AWS S3 (Configured)
+- ✅ Authentication: Session-based (Working)
+- ✅ All Routes: Implemented
+- ✅ Ready for: **Deployment** 🚀
+
+---
+
+**Happy Coding! 💻✨**
 
 ## .env File
 The `.env` file stores the environment-specific configuration.
