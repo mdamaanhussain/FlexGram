@@ -31,24 +31,42 @@ Storage:   AWS S3 (for images) ✨ [Recently updated]
 ```
 FlexGram/
 │
-├── index.js                  ← Main application file (all logic here)
-├── package.json              ← All dependencies/packages
-├── .env                      ← Secret keys (AWS, MongoDB)
-├── .env.example              ← .env file reference
+├── index.js                  ← App entry point
+├── package.json              ← Dependencies and scripts
+├── .env                      ← Local environment secrets
+├── .env.example              ← Environment template
+├── README.md                 ← Project overview
 │
 ├── public/
-│   └── uploads/              ← Local fallback folder (images now from AWS S3)
+│   └── uploads/              ← Local fallback images
 │
-├── views/ (All pages shown to users)
-│   ├── index.ejs             ← Main feed (all posts displayed here)
-│   ├── login.ejs             ← Login page
-│   ├── new.ejs               ← Create new post page
-│   ├── edit.ejs              ← Edit post page
-│   └── show.ejs              ← Individual post details
+├── views/                    ← EJS templates
+│   ├── index.ejs
+│   ├── login.ejs
+│   ├── new.ejs
+│   ├── edit.ejs
+│   └── show.ejs
 │
-├── MIGRATION_SUMMARY.md      ← What changed
-└── AWS_S3_MIGRATION.md       ← AWS S3 setup guide
-
+├── src/
+│   ├── app.js                ← Express app bootstrap
+│   ├── config/
+│   │   └── appConfig.js      ← Env/config constants
+│   ├── middleware/
+│   │   └── auth.js           ← Auth + permission logic
+│   ├── models/
+│   │   └── Post.js           ← MongoDB schema/model
+│   ├── routes/
+│   │   └── postRoutes.js     ← All routes and handlers
+│   └── services/
+│       └── storageService.js ← S3/local upload and delete logic
+│
+├── AWS_S3_MIGRATION.md       ← AWS setup guide
+├── MIGRATION_SUMMARY.md      ← Migration notes
+├── ARCHITECTURE.md           ← Architecture overview
+├── DOCS_INDEX.md            ← Documentation index
+├── QUICK_START.md           ← Quick setup steps
+├── TROUBLESHOOTING.md       ← Common issues
+└── .github/                 ← GitHub automation and metadata
 ```
 
 ---
