@@ -142,7 +142,12 @@ router.post("/posts/:id/like", requireAuth, async (req, res) => {
 });
 
 router.get("/s3-file/*fileKey", async (req, res) => {
-  const fileKey = req.params.fileKey;
+  const fileKey = Array.isArray(req.params.fileKey)
+    ? req.params.fileKey.join("/")
+    : req.params.fileKey;
+
+  console.log("S3 KEY:", fileKey);
+
   await getS3File(fileKey, res);
 });
 
